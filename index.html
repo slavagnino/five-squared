@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f4f1ea">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Five²">
+  <title>Five²</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f4f1ea;
+      --text: #1e1f22;
+      --muted: #65676b;
+      --tile: #fffdf8;
+      --tile-border: #b6b0a6;
+      --ended: #c9c9c9;
+      --ended-border: #8b8b8b;
+      --button: #1e1f22;
+      --button-text: #ffffff;
+      --secondary: #ebe7df;
+      --secondary-border: #b8b1a7;
+      --focus: #5b7cfa;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      min-height: 100dvh;
+      padding: max(18px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
+      display: flex;
+      justify-content: center;
+    }
+
+    main {
+      width: min(720px, 100%);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      font-size: clamp(2rem, 7vw, 3.4rem);
+      font-weight: 800;
+      letter-spacing: -0.05em;
+      line-height: 0.95;
+    }
+
+    .timer-wrap {
+      text-align: right;
+      min-width: 7.25rem;
+    }
+
+    #timer {
+      font-variant-numeric: tabular-nums;
+      font-size: clamp(2.1rem, 8vw, 3.3rem);
+      font-weight: 750;
+      line-height: 1;
+    }
+
+    #status {
+      margin-top: 4px;
+      min-height: 1.2em;
+      color: var(--muted);
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    #status.time-up {
+      color: var(--text);
+      font-size: 1.05rem;
+      font-weight: 800;
+    }
+
+    #board {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: clamp(6px, 1.6vw, 12px);
+      width: 100%;
+      aspect-ratio: 1 / 1;
+    }
+
+    .tile {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
+      aspect-ratio: 1 / 1;
+      border: 2px solid var(--tile-border);
+      border-radius: clamp(10px, 2.5vw, 18px);
+      background: var(--tile);
+      color: var(--text);
+      font-size: clamp(2rem, 10.5vw, 5rem);
+      font-weight: 800;
+      line-height: 1;
+      text-transform: uppercase;
+      user-select: none;
+      transition: background-color 180ms ease, border-color 180ms ease;
+    }
+
+    .tile.qu {
+      font-size: clamp(1.55rem, 8vw, 3.8rem);
+      text-transform: none;
+    }
+
+    #board.ended .tile {
+      background: var(--ended);
+      border-color: var(--ended-border);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    button {
+      appearance: none;
+      -webkit-appearance: none;
+      min-height: 50px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      font: inherit;
+      font-size: 1rem;
+      font-weight: 750;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    button:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    button.primary {
+      background: var(--button);
+      color: var(--button-text);
+    }
+
+    button.secondary {
+      background: var(--secondary);
+      color: var(--text);
+      border-color: var(--secondary-border);
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: default;
+    }
+
+    .note {
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.4;
+      text-align: center;
+    }
+
+    @media (max-width: 430px) {
+      body { padding-left: 12px; padding-right: 12px; }
+      .controls { grid-template-columns: 1fr; }
+      header { align-items: center; }
+      .timer-wrap { text-align: left; }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #191a1d;
+        --text: #f3f3f1;
+        --muted: #b6b6b0;
+        --tile: #292b2f;
+        --tile-border: #666970;
+        --ended: #4a4b4f;
+        --ended-border: #7b7d82;
+        --button: #f0eee9;
+        --button-text: #1b1c1f;
+        --secondary: #2c2e32;
+        --secondary-border: #62656b;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="brand" aria-label="Five squared">Five²</div>
+      <div class="timer-wrap">
+        <div id="timer" aria-live="off">3:00</div>
+        <div id="status" aria-live="polite">Ready</div>
+      </div>
+    </header>
+
+    <section id="board" aria-label="Five by five letter board"></section>
+
+    <div class="controls" aria-label="Game controls">
+      <button id="start" class="primary" type="button">Start</button>
+      <button id="pause" class="secondary" type="button" disabled>Pause</button>
+      <button id="new-board" class="secondary" type="button">New Board</button>
+    </div>
+
+    <div class="note">3-minute rounds · works offline after first load</div>
+  </main>
+
+  <script>
+    (() => {
+      'use strict';
+
+      // 25 six-sided dice using a classic 5×5 letter-cube distribution.
+      const DICE = [
+        'AAAFRS','AAEEEE','AAFIRS','ADENNN','AEEEEM',
+        'AEEGMU','AEGMNN','AFIRSY','BJKQXZ','CCNSTW',
+        'CEIILT','CEILPT','CEIPST','DDLNOR','DHHLOR',
+        'DHHNOT','DHLNOR','EIIITT','EMOTTT','ENSSSU',
+        'FIPRSY','GORRVW','HIPRRY','NOOTUW','OOOTTU'
+      ];
+
+      const ROUND_MS = 3 * 60 * 1000;
+      const boardEl = document.getElementById('board');
+      const timerEl = document.getElementById('timer');
+      const statusEl = document.getElementById('status');
+      const startBtn = document.getElementById('start');
+      const pauseBtn = document.getElementById('pause');
+      const newBoardBtn = document.getElementById('new-board');
+
+      let state = 'ready'; // ready | running | paused | ended
+      let remainingMs = ROUND_MS;
+      let deadline = 0;
+      let ticker = null;
+      let audioContext = null;
+
+      function randomInt(maxExclusive) {
+        if (!Number.isInteger(maxExclusive) || maxExclusive <= 0) {
+          throw new RangeError('maxExclusive must be a positive integer');
+        }
+
+        if (window.crypto && window.crypto.getRandomValues) {
+          const range = 0x100000000;
+          const limit = range - (range % maxExclusive);
+          const sample = new Uint32Array(1);
+          let value;
+          do {
+            window.crypto.getRandomValues(sample);
+            value = sample[0];
+          } while (value >= limit);
+          return value % maxExclusive;
+        }
+
+        return Math.floor(Math.random() * maxExclusive);
+      }
+
+      function shuffle(array) {
+        const result = array.slice();
+        for (let i = result.length - 1; i > 0; i--) {
+          const j = randomInt(i + 1);
+          [result[i], result[j]] = [result[j], result[i]];
+        }
+        return result;
+      }
+
+      function rollDice() {
+        return shuffle(DICE.map(die => die[randomInt(die.length)]));
+      }
+
+      function drawBoard() {
+        boardEl.replaceChildren();
+        for (const letter of rollDice()) {
+          const tile = document.createElement('div');
+          tile.className = 'tile' + (letter === 'Q' ? ' qu' : '');
+          tile.textContent = letter === 'Q' ? 'Qu' : letter;
+          tile.setAttribute('aria-label', letter === 'Q' ? 'Q U' : letter);
+          boardEl.appendChild(tile);
+        }
+      }
+
+      function formatTime(ms) {
+        const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${minutes}:${String(seconds).padStart(2, '0')}`;
+      }
+
+      function render() {
+        timerEl.textContent = formatTime(remainingMs);
+        boardEl.classList.toggle('ended', state === 'ended');
+        statusEl.classList.toggle('time-up', state === 'ended');
+
+        switch (state) {
+          case 'ready':
+            statusEl.textContent = 'Ready';
+            startBtn.textContent = 'Start';
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+            break;
+          case 'running':
+            statusEl.textContent = 'Playing';
+            startBtn.textContent = 'Running';
+            startBtn.disabled = true;
+            pauseBtn.disabled = false;
+            break;
+          case 'paused':
+            statusEl.textContent = 'Paused';
+            startBtn.textContent = 'Resume';
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+            break;
+          case 'ended':
+            statusEl.textContent = 'Time!';
+            startBtn.textContent = 'Start';
+            startBtn.disabled = true;
+            pauseBtn.disabled = true;
+            break;
+        }
+      }
+
+      function clearTicker() {
+        if (ticker !== null) {
+          clearInterval(ticker);
+          ticker = null;
+        }
+      }
+
+      function tick() {
+        if (state !== 'running') return;
+        remainingMs = Math.max(0, deadline - performance.now());
+        if (remainingMs <= 0) {
+          endRound();
+          return;
+        }
+        render();
+      }
+
+      function ensureAudio() {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        if (!audioContext) audioContext = new AudioCtx();
+        if (audioContext.state === 'suspended') {
+          audioContext.resume().catch(() => {});
+        }
+      }
+
+      function beepAt(offsetSeconds, frequency, durationSeconds) {
+        if (!audioContext || audioContext.state !== 'running') return;
+        const oscillator = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        const start = audioContext.currentTime + offsetSeconds;
+        const end = start + durationSeconds;
+
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(frequency, start);
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(0.18, start + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, end);
+
+        oscillator.connect(gain);
+        gain.connect(audioContext.destination);
+        oscillator.start(start);
+        oscillator.stop(end + 0.02);
+      }
+
+      function playEndSignal() {
+        try {
+          ensureAudio();
+          beepAt(0.00, 660, 0.16);
+          beepAt(0.24, 880, 0.28);
+        } catch (_) {
+          // Visual end state is always present even if audio is unavailable.
+        }
+      }
+
+      function startRound() {
+        if (state === 'ended') return;
+        ensureAudio();
+        deadline = performance.now() + remainingMs;
+        state = 'running';
+        clearTicker();
+        ticker = setInterval(tick, 200);
+        tick();
+      }
+
+      function pauseRound() {
+        if (state !== 'running') return;
+        remainingMs = Math.max(0, deadline - performance.now());
+        clearTicker();
+        state = remainingMs > 0 ? 'paused' : 'ended';
+        render();
+      }
+
+      function endRound() {
+        clearTicker();
+        remainingMs = 0;
+        state = 'ended';
+        playEndSignal();
+        render();
+      }
+
+      function newBoard() {
+        clearTicker();
+        remainingMs = ROUND_MS;
+        state = 'ready';
+        drawBoard();
+        render();
+      }
+
+      startBtn.addEventListener('click', startRound);
+      pauseBtn.addEventListener('click', pauseRound);
+      newBoardBtn.addEventListener('click', newBoard);
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && state === 'running') tick();
+      });
+
+      drawBoard();
+      render();
+
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
