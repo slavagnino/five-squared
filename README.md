@@ -12,16 +12,9 @@ Five² is a deliberately simple 5×5 letter-grid word game for two people sharin
 - works offline after the first successful load
 
 
-## Publish with GitHub Pages
+## Publish location on GitHub Pages
 
-1. Create a public GitHub repository named `five-squared`.
-2. Put the files from this folder at the repository root and push them to your default branch (normally `main`).
-3. In GitHub, open **Settings → Pages**.
-4. Under **Build and deployment**, set **Source** to **Deploy from a branch**.
-5. Select your default branch and **/(root)**, then save.
-6. GitHub will show the published site address in the Pages settings. For a project repository it will normally look like:
-
-   `https://YOUR-USERNAME.github.io/five-squared/`
+https://slavagnino.github.io/five-squared/
 
 No build step is required. The included `.nojekyll` file tells GitHub Pages to serve the files directly.
 
