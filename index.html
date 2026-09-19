@@ -219,7 +219,7 @@
     </div>
 
     <div class="note">3-minute rounds · works offline after first load</div>
-    <div class="note build-stamp">Build: Sep 18, 2026 · 8:10 PM</div>
+    <div class="note build-stamp">Build: Sep 19, 2026 · 7:10 AM</div>
   </main>
 
   <script>
@@ -289,6 +289,8 @@
           tile.className = 'tile' + (letter === 'Q' ? ' qu' : '');
           tile.textContent = letter === 'Q' ? 'Qu' : letter;
           tile.setAttribute('aria-label', letter === 'Q' ? 'Q U' : letter);
+          const rotation = randomInt(4) * 90;
+          tile.style.transform = `rotate(${rotation}deg)`;
           boardEl.appendChild(tile);
         }
       }
