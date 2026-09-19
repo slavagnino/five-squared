@@ -102,6 +102,7 @@
     }
 
     .tile {
+    position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -198,7 +199,18 @@
         --secondary-border: #62656b;
       }
     }
-  </style>
+  
+  .tile-letter {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    line-height: 1;
+    transform: translate(-50%, -50%) rotate(var(--rotation, 0deg));
+    transform-origin: center center;
+    white-space: nowrap;
+  }
+
+</style>
 </head>
 <body>
   <main>
@@ -219,7 +231,7 @@
     </div>
 
     <div class="note">3-minute rounds · works offline after first load</div>
-    <div class="note build-stamp">Build: Sep 19, 2026 · 7:10 AM</div>
+    <div class="note build-stamp">Build: Sep 19, 2026 · 8:10 AM</div>
   </main>
 
   <script>
@@ -287,10 +299,16 @@
         for (const letter of rollDice()) {
           const tile = document.createElement('div');
           tile.className = 'tile' + (letter === 'Q' ? ' qu' : '');
-          tile.textContent = letter === 'Q' ? 'Qu' : letter;
           tile.setAttribute('aria-label', letter === 'Q' ? 'Q U' : letter);
+
+          const letterEl = document.createElement('span');
+          letterEl.className = 'tile-letter';
+          letterEl.textContent = letter === 'Q' ? 'Qu' : letter;
+
           const rotation = randomInt(4) * 90;
-          tile.style.transform = `rotate(${rotation}deg)`;
+          letterEl.style.setProperty('--rotation', `${rotation}deg`);
+
+          tile.appendChild(letterEl);
           boardEl.appendChild(tile);
         }
       }
