@@ -244,12 +244,18 @@
     .shuffle-mark.nested-diamonds::before { width: 70%; height: 70%; }
     .shuffle-mark.nested-diamonds::after { width: 34%; height: 34%; }
     #board.shuffling .shuffle-mark { -webkit-animation: shuffle-spin 900ms linear infinite; animation: shuffle-spin 900ms linear infinite; -webkit-animation-delay: var(--delay); animation-delay: var(--delay); }
-    #board.shuffling .shuffle-mark[style*="reverse"] { -webkit-animation-direction: reverse; animation-direction: reverse; }
+    #board.shuffling .shuffle-mark.spin-reverse { -webkit-animation-name: shuffle-spin-reverse; animation-name: shuffle-spin-reverse; }
     @keyframes shuffle-spin {
       to { transform: translate(-50%, -50%) rotate(360deg); }
     }
     @-webkit-keyframes shuffle-spin {
       to { -webkit-transform: translate(-50%, -50%) rotate(360deg); transform: translate(-50%, -50%) rotate(360deg); }
+    }
+    @keyframes shuffle-spin-reverse {
+      to { transform: translate(-50%, -50%) rotate(-360deg); }
+    }
+    @-webkit-keyframes shuffle-spin-reverse {
+      to { -webkit-transform: translate(-50%, -50%) rotate(-360deg); transform: translate(-50%, -50%) rotate(-360deg); }
     }
     @media (prefers-reduced-motion: reduce) {
       #board.shuffling .shuffle-mark { -webkit-animation: none; animation: none; }
@@ -280,7 +286,7 @@
     </div>
 
     <div class="note">3-minute rounds · works offline after first load</div>
-    <div class="note build-stamp">Build: v15 · Sep 20, 2026</div>
+    <div class="note build-stamp">Build: v16 · Sep 20, 2026</div>
   </main>
 
   <script>
@@ -371,9 +377,8 @@
           if (blank && index !== 12) {
             const mark = document.createElement('span');
             const symbols = ['compass-star', 'nested-diamonds', 'orbiting-dot'];
-            mark.className = `shuffle-mark ${symbols[randomInt(symbols.length)]}`;
-            mark.style.animationDirection = randomInt(2) ? 'normal' : 'reverse';
-            mark.style.webkitAnimationDirection = mark.style.animationDirection;
+            const direction = randomInt(2) ? '' : ' spin-reverse';
+            mark.className = `shuffle-mark ${symbols[randomInt(symbols.length)]}${direction}`;
             mark.setAttribute('aria-hidden', 'true');
             tile.appendChild(mark);
           }
