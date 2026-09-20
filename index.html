@@ -243,7 +243,8 @@
     .shuffle-mark.nested-diamonds::before, .shuffle-mark.nested-diamonds::after { content: ""; position: absolute; left: 50%; top: 50%; border: 2px solid currentColor; transform: translate(-50%, -50%) rotate(45deg); }
     .shuffle-mark.nested-diamonds::before { width: 70%; height: 70%; }
     .shuffle-mark.nested-diamonds::after { width: 34%; height: 34%; }
-    #board.shuffling .shuffle-mark { -webkit-animation: none; animation: none; }
+    #board.shuffling .shuffle-mark { -webkit-animation: shuffle-spin 900ms linear infinite; animation: shuffle-spin 900ms linear infinite; -webkit-animation-delay: var(--delay); animation-delay: var(--delay); }
+    #board.shuffling .shuffle-mark.spin-reverse { -webkit-animation-name: shuffle-spin-reverse; animation-name: shuffle-spin-reverse; }
     @keyframes shuffle-spin {
       to { transform: translate(-50%, -50%) rotate(360deg); }
     }
@@ -285,7 +286,7 @@
     </div>
 
     <div class="note">3-minute rounds · works offline after first load</div>
-    <div class="note build-stamp">Build: v17 · Sep 20, 2026</div>
+    <div class="note build-stamp">Build: v16 · Sep 20, 2026</div>
   </main>
 
   <script>
@@ -320,9 +321,6 @@
       let deadline = 0;
       let ticker = null;
       let audioContext = null;
-      let shuffleFrame = null;
-      let shuffleStartedAt = 0;
-      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
       function randomInt(maxExclusive) {
         if (!Number.isInteger(maxExclusive) || maxExclusive <= 0) {
@@ -381,8 +379,6 @@
             const symbols = ['compass-star', 'nested-diamonds', 'orbiting-dot'];
             const direction = randomInt(2) ? '' : ' spin-reverse';
             mark.className = `shuffle-mark ${symbols[randomInt(symbols.length)]}${direction}`;
-            mark.dataset.angle = String(randomInt(360));
-            mark.dataset.direction = randomInt(2) ? '1' : '-1';
             mark.setAttribute('aria-hidden', 'true');
             tile.appendChild(mark);
           }
@@ -445,34 +441,6 @@
           clearInterval(ticker);
           ticker = null;
         }
-        stopShuffleAnimation();
-      }
-
-      function stopShuffleAnimation() {
-        if (shuffleFrame !== null && typeof cancelAnimationFrame === 'function') {
-          cancelAnimationFrame(shuffleFrame);
-        }
-        shuffleFrame = null;
-      }
-
-      function animateShuffle(now) {
-        if (state !== 'shuffling') {
-          stopShuffleAnimation();
-          return;
-        }
-        const elapsed = (now - shuffleStartedAt) * 0.28;
-        boardEl.querySelectorAll('.shuffle-mark').forEach(mark => {
-          const angle = Number(mark.dataset.angle) + elapsed * Number(mark.dataset.direction);
-          mark.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
-        });
-        shuffleFrame = requestAnimationFrame(animateShuffle);
-      }
-
-      function startShuffleAnimation() {
-        stopShuffleAnimation();
-        if (reducedMotion.matches || typeof requestAnimationFrame !== 'function') return;
-        shuffleStartedAt = performance.now();
-        shuffleFrame = requestAnimationFrame(animateShuffle);
       }
 
       function tick() {
@@ -544,7 +512,6 @@
         state = 'shuffling';
         remainingMs = ROUND_MS;
         drawBoard(true);
-        startShuffleAnimation();
         shuffleDeadline = performance.now() + 3000;
         shuffleTick();
         ticker = setInterval(shuffleTick, 50);
