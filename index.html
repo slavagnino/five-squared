@@ -60,6 +60,9 @@
       flex-wrap: wrap;
     }
 
+    main > header, main > .controls { width: 80%; margin-inline: auto; }
+    main[data-expanded="true"] > header, main[data-expanded="true"] > .controls { width: 100%; }
+
     .brand {
       font-size: clamp(2rem, 7vw, 3.4rem);
       font-weight: 800;
@@ -95,6 +98,7 @@
 
     #board {
       display: grid;
+      position: relative;
       grid-template-columns: repeat(5, 1fr);
       gap: clamp(6px, 1.6vw, 12px);
       width: 100%;
@@ -212,15 +216,19 @@
     white-space: nowrap;
   }
 
-    .board-wrap { position: relative; width: 100%; margin-inline: auto; }
+    .board-wrap { position: relative; width: 100%; margin: 56px auto 0; }
     @media (min-width: 600px) { .board-wrap { width: 80%; } }
     .board-wrap[data-expanded="true"] { width: 100%; }
     .board-wrap[data-expanded="false"] { width: 80%; }
-    .board-tools { position: absolute; right: -56px; bottom: 0; width: 48px; height: 48px; }
+    .board-tools { position: absolute; right: 0; top: -56px; width: 48px; height: 48px; }
     #board-size { min-width: 48px; min-height: 48px; padding: 0; font-size: 1.4rem; line-height: 1; background: transparent; border-color: transparent; color: var(--text); }
     #board-size:hover { background: transparent; border-color: transparent; }
     #board-size svg { width: 1.35em; height: 1.35em; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
-    @media (max-width: 599px) { .board-tools { right: 0; } }
+    @media (max-width: 599px) {
+      main > header, main > .controls { width: 100%; }
+      header { justify-content: center; text-align: center; }
+      .timer-wrap { text-align: center; }
+    }
     #countdown {
       position: absolute; left: 40%; top: 40%; width: 20%; height: 20%;
       display: grid; place-items: center; pointer-events: none;
@@ -256,8 +264,7 @@
     </header>
 
     <div class="board-wrap" id="board-wrap">
-      <section id="board" aria-label="Five by five letter board"></section>
-      <div id="countdown" hidden aria-hidden="true"></div>
+      <section id="board" aria-label="Five by five letter board"><div id="countdown" hidden aria-hidden="true"></div></section>
       <div class="board-tools">
         <button id="board-size" class="secondary" type="button" aria-controls="board" aria-label="Expand board" aria-pressed="false"><span aria-hidden="true"><svg viewBox="0 0 48 48" focusable="false"><path d="M8 18V8h10M8 8l14 14M30 40h10V30M40 40L26 26"/></svg></span></button>
       </div>
@@ -269,7 +276,7 @@
     </div>
 
     <div class="note">3-minute rounds · works offline after first load</div>
-    <div class="note build-stamp">Build: v11 · Sep 20, 2026</div>
+    <div class="note build-stamp">Build: v12 · Sep 20, 2026</div>
   </main>
 
   <script>
@@ -287,6 +294,7 @@
 
       const ROUND_MS = 3 * 60 * 1000;
       const boardEl = document.getElementById('board');
+      const mainEl = document.querySelector('main');
       const timerEl = document.getElementById('timer');
       const statusEl = document.getElementById('status');
       const startBtn = document.getElementById('start');
@@ -366,6 +374,7 @@
           }
           boardEl.appendChild(tile);
         }
+        boardEl.appendChild(countdownEl);
       }
 
       function formatTime(ms) {
@@ -543,6 +552,7 @@
       function renderSize() {
         const expanded = expandedOverride ?? !wideScreen.matches;
         if (expandedOverride !== null) boardWrap.dataset.expanded = String(expanded);
+        mainEl.dataset.expanded = String(expanded);
         sizeBtn.setAttribute('aria-label', expanded ? 'Reduce board' : 'Expand board');
         sizeBtn.title = expanded ? 'Reduce board' : 'Expand board';
         sizeBtn.setAttribute('aria-pressed', String(expanded));
