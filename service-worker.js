@@ -1,4 +1,4 @@
-const CACHE_NAME = 'five-squared-v12';
+const CACHE_NAME = 'five-squared-v13';
 
 const APP_SHELL = [
   './',
