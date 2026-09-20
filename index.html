@@ -45,6 +45,8 @@
       justify-content: center;
     }
 
+    @media (min-width: 600px) { body { align-items: center; } }
+
     main {
       width: min(720px, 100%);
       display: flex;
@@ -58,7 +60,7 @@
       align-items: end;
     }
 
-    main > header, main > .controls { width: 80%; margin-inline: auto; }
+    main > header, main > .controls { width: 68%; margin-inline: auto; }
     main[data-expanded="true"] > header, main[data-expanded="true"] > .controls { width: 100%; }
 
     .brand {
@@ -219,9 +221,9 @@
   }
 
     .board-wrap { position: relative; width: 100%; margin: 0 auto; }
-    @media (min-width: 600px) { .board-wrap { width: 80%; } }
+    @media (min-width: 600px) { .board-wrap { width: 68%; } }
     .board-wrap[data-expanded="true"] { width: 100%; }
-    .board-wrap[data-expanded="false"] { width: 80%; }
+    .board-wrap[data-expanded="false"] { width: 68%; }
     #board-size { min-width: 48px; min-height: 48px; padding: 0; font-size: 1.4rem; line-height: 1; background: transparent; border-color: transparent; color: var(--text); }
     #board-size:hover { background: transparent; border-color: transparent; }
     #board-size svg { width: 1.35em; height: 1.35em; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
@@ -286,7 +288,7 @@
     </div>
 
     <div class="note">3-minute rounds · works offline after first load</div>
-    <div class="note build-stamp">Build: v16 · Sep 20, 2026</div>
+    <div class="note build-stamp">Build: v17 · Sep 20, 2026</div>
   </main>
 
   <script>
