@@ -216,21 +216,31 @@
     @media (min-width: 600px) { .board-wrap { width: 80%; } }
     .board-wrap[data-expanded="true"] { width: 100%; }
     .board-wrap[data-expanded="false"] { width: 80%; }
-    .board-tools { display: flex; justify-content: center; }
-    #board-size { min-width: 48px; min-height: 48px; font-size: 1.4rem; }
+    .board-tools { display: flex; justify-content: flex-end; width: 100%; }
+    #board-size { min-width: 48px; min-height: 48px; font-size: 1.4rem; line-height: 1; }
     #countdown {
-      position: absolute; inset: 0; display: grid; place-items: center;
-      pointer-events: none; font-size: clamp(4rem, 18vw, 8rem);
-      font-weight: 800; text-shadow: 0 2px 12px var(--bg);
+      position: absolute; left: 40%; top: 40%; width: 20%; height: 20%;
+      display: grid; place-items: center; pointer-events: none;
+      font: inherit; font-size: clamp(2rem, 10.5vw, 5rem); font-weight: 800;
+      line-height: 1; z-index: 2;
     }
     #countdown[hidden] { display: none; }
-    #board.shuffling .tile { animation: shuffle 280ms ease-in-out infinite alternate; animation-delay: var(--delay); }
-    @keyframes shuffle {
-      from { transform: translate(var(--x), var(--y)) rotate(var(--tilt)) scale(.94); }
-      to { transform: translate(calc(-1 * var(--x)), calc(-1 * var(--y))) rotate(calc(-1 * var(--tilt))) scale(1.02); }
+    .shuffle-mark {
+      position: absolute; left: 50%; top: 50%; width: 42%; height: 42%;
+      border: 2px solid currentColor; border-radius: 50%;
+      transform: translate(-50%, -50%); opacity: .72;
+    }
+    .shuffle-mark::after {
+      content: ""; position: absolute; left: 50%; top: -5px;
+      width: 8px; height: 8px; border-radius: 50%; background: currentColor;
+      transform: translateX(-50%);
+    }
+    #board.shuffling .shuffle-mark { animation: orbit 900ms linear infinite; animation-delay: var(--delay); }
+    @keyframes orbit {
+      to { transform: translate(-50%, -50%) rotate(360deg); }
     }
     @media (prefers-reduced-motion: reduce) {
-      #board.shuffling .tile { animation: none; }
+      #board.shuffling .shuffle-mark { animation: none; }
       .tile { transition: none; }
     }
 </style>
@@ -250,7 +260,7 @@
       <div id="countdown" hidden aria-hidden="true"></div>
     </div>
     <div class="board-tools">
-      <button id="board-size" class="secondary" type="button" aria-controls="board" aria-label="Expand board" aria-pressed="false"><span aria-hidden="true">⌃</span></button>
+      <button id="board-size" class="secondary" type="button" aria-controls="board" aria-label="Expand board" aria-pressed="false"><span aria-hidden="true">⤡</span></button>
     </div>
 
     <div class="controls" aria-label="Game controls">
@@ -259,7 +269,7 @@
     </div>
 
     <div class="note">3-minute rounds · works offline after first load</div>
-    <div class="note build-stamp">Build: v9 · Sep 20, 2026</div>
+    <div class="note build-stamp">Build: v10 · Sep 20, 2026</div>
   </main>
 
   <script>
@@ -329,14 +339,13 @@
 
       function drawBoard(blank = false) {
         boardEl.replaceChildren();
-        for (const letter of (blank ? Array(25).fill('') : rollDice())) {
+        const letters = blank ? Array(25).fill('') : rollDice();
+        for (let index = 0; index < letters.length; index += 1) {
+          const letter = letters[index];
           const tile = document.createElement('div');
           tile.className = 'tile' + (letter === 'Q' ? ' qu' : '');
           tile.setAttribute('aria-label', letter === 'Q' ? 'Q U' : letter);
           if (blank) tile.setAttribute('aria-hidden', 'true');
-          tile.style.setProperty('--x', `${randomInt(7) - 3}px`);
-          tile.style.setProperty('--y', `${randomInt(7) - 3}px`);
-          tile.style.setProperty('--tilt', `${randomInt(15) - 7}deg`);
           tile.style.setProperty('--delay', `${-randomInt(280)}ms`);
 
           const letterEl = document.createElement('span');
@@ -347,6 +356,12 @@
           letterEl.style.setProperty('--rotation', `${rotation}deg`);
 
           tile.appendChild(letterEl);
+          if (blank && index !== 12) {
+            const mark = document.createElement('span');
+            mark.className = 'shuffle-mark';
+            mark.setAttribute('aria-hidden', 'true');
+            tile.appendChild(mark);
+          }
           boardEl.appendChild(tile);
         }
       }
@@ -375,20 +390,20 @@
             break;
           case 'running':
             statusEl.textContent = 'Playing';
-            startBtn.textContent = 'Running';
-            startBtn.disabled = true;
+            startBtn.textContent = 'Cancel';
+            startBtn.disabled = false;
             pauseBtn.disabled = false;
             break;
           case 'shuffling':
             statusEl.textContent = `Shuffling… ${countdownEl.textContent}`;
-            startBtn.textContent = 'Start';
-            startBtn.disabled = true;
+            startBtn.textContent = 'Cancel';
+            startBtn.disabled = false;
             pauseBtn.disabled = true;
             break;
           case 'paused':
             statusEl.textContent = 'Paused';
-            startBtn.textContent = 'Start';
-            startBtn.disabled = true;
+            startBtn.textContent = 'Cancel';
+            startBtn.disabled = false;
             pauseBtn.disabled = false;
             break;
           case 'ended':
@@ -481,6 +496,23 @@
         ticker = setInterval(shuffleTick, 50);
       }
 
+      function cancelRound() {
+        if (state !== 'shuffling' && state !== 'running' && state !== 'paused') return;
+        clearTicker();
+        remainingMs = ROUND_MS;
+        state = 'ready';
+        drawBoard(true);
+        render();
+      }
+
+      function handleStartClick() {
+        if (state === 'shuffling' || state === 'running' || state === 'paused') {
+          cancelRound();
+          return;
+        }
+        startRound();
+      }
+
       function pauseRound() {
         if (state === 'paused') {
           try { ensureAudio(); } catch (_) {}
@@ -512,7 +544,7 @@
         sizeBtn.setAttribute('aria-label', expanded ? 'Reduce board' : 'Expand board');
         sizeBtn.title = expanded ? 'Reduce board' : 'Expand board';
         sizeBtn.setAttribute('aria-pressed', String(expanded));
-        sizeBtn.firstElementChild.textContent = expanded ? '⌄' : '⌃';
+        sizeBtn.firstElementChild.textContent = expanded ? '⤡' : '⤢';
       }
       sizeBtn.addEventListener('click', () => {
         expandedOverride = !(expandedOverride ?? !wideScreen.matches);
@@ -521,7 +553,7 @@
       wideScreen.addEventListener('change', renderSize);
       renderSize();
 
-      startBtn.addEventListener('click', startRound);
+      startBtn.addEventListener('click', handleStartClick);
       pauseBtn.addEventListener('click', pauseRound);
 
       document.addEventListener('visibilitychange', () => {
