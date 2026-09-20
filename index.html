@@ -236,19 +236,23 @@
       line-height: 1; z-index: 2;
     }
     #countdown[hidden] { display: none; }
-    .shuffle-mark { position: absolute; left: 50%; top: 50%; width: 48%; height: 48%; transform: translate(-50%, -50%); opacity: .72; }
+    .shuffle-mark { position: absolute; left: 50%; top: 50%; width: 48%; height: 48%; transform: translate(-50%, -50%); opacity: .72; -webkit-transform-origin: 50% 50%; transform-origin: 50% 50%; }
     .shuffle-mark.orbiting-dot { border: 2px solid currentColor; border-radius: 50%; }
     .shuffle-mark.orbiting-dot::after { content: ""; position: absolute; left: 50%; top: -5px; width: 8px; height: 8px; border-radius: 50%; background: currentColor; transform: translateX(-50%); }
     .shuffle-mark.compass-star::before { content: ""; position: absolute; inset: 10%; background: currentColor; clip-path: polygon(50% 0, 61% 38%, 100% 50%, 61% 62%, 50% 100%, 39% 62%, 0 50%, 39% 38%); }
     .shuffle-mark.nested-diamonds::before, .shuffle-mark.nested-diamonds::after { content: ""; position: absolute; left: 50%; top: 50%; border: 2px solid currentColor; transform: translate(-50%, -50%) rotate(45deg); }
     .shuffle-mark.nested-diamonds::before { width: 70%; height: 70%; }
     .shuffle-mark.nested-diamonds::after { width: 34%; height: 34%; }
-    #board.shuffling .shuffle-mark { animation: shuffle-spin 900ms linear infinite; animation-delay: var(--delay); }
+    #board.shuffling .shuffle-mark { -webkit-animation: shuffle-spin 900ms linear infinite; animation: shuffle-spin 900ms linear infinite; -webkit-animation-delay: var(--delay); animation-delay: var(--delay); }
+    #board.shuffling .shuffle-mark[style*="reverse"] { -webkit-animation-direction: reverse; animation-direction: reverse; }
     @keyframes shuffle-spin {
       to { transform: translate(-50%, -50%) rotate(360deg); }
     }
+    @-webkit-keyframes shuffle-spin {
+      to { -webkit-transform: translate(-50%, -50%) rotate(360deg); transform: translate(-50%, -50%) rotate(360deg); }
+    }
     @media (prefers-reduced-motion: reduce) {
-      #board.shuffling .shuffle-mark { animation: none; }
+      #board.shuffling .shuffle-mark { -webkit-animation: none; animation: none; }
       .tile { transition: none; }
     }
 </style>
@@ -276,7 +280,7 @@
     </div>
 
     <div class="note">3-minute rounds · works offline after first load</div>
-    <div class="note build-stamp">Build: v14 · Sep 20, 2026</div>
+    <div class="note build-stamp">Build: v15 · Sep 20, 2026</div>
   </main>
 
   <script>
@@ -369,6 +373,7 @@
             const symbols = ['compass-star', 'nested-diamonds', 'orbiting-dot'];
             mark.className = `shuffle-mark ${symbols[randomInt(symbols.length)]}`;
             mark.style.animationDirection = randomInt(2) ? 'normal' : 'reverse';
+            mark.style.webkitAnimationDirection = mark.style.animationDirection;
             mark.setAttribute('aria-hidden', 'true');
             tile.appendChild(mark);
           }
