@@ -132,7 +132,7 @@
 
     .controls {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 10px;
     }
 
@@ -212,6 +212,27 @@
     white-space: nowrap;
   }
 
+    .board-wrap { position: relative; width: 100%; margin-inline: auto; }
+    @media (min-width: 600px) { .board-wrap { width: 80%; } }
+    .board-wrap[data-expanded="true"] { width: 100%; }
+    .board-wrap[data-expanded="false"] { width: 80%; }
+    .board-tools { display: flex; justify-content: center; }
+    #board-size { min-width: 48px; min-height: 48px; font-size: 1.4rem; }
+    #countdown {
+      position: absolute; inset: 0; display: grid; place-items: center;
+      pointer-events: none; font-size: clamp(4rem, 18vw, 8rem);
+      font-weight: 800; text-shadow: 0 2px 12px var(--bg);
+    }
+    #countdown[hidden] { display: none; }
+    #board.shuffling .tile { animation: shuffle 280ms ease-in-out infinite alternate; animation-delay: var(--delay); }
+    @keyframes shuffle {
+      from { transform: translate(var(--x), var(--y)) rotate(var(--tilt)) scale(.94); }
+      to { transform: translate(calc(-1 * var(--x)), calc(-1 * var(--y))) rotate(calc(-1 * var(--tilt))) scale(1.02); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #board.shuffling .tile { animation: none; }
+      .tile { transition: none; }
+    }
 </style>
 </head>
 <body>
@@ -224,16 +245,21 @@
       </div>
     </header>
 
-    <section id="board" aria-label="Five by five letter board"></section>
+    <div class="board-wrap" id="board-wrap">
+      <section id="board" aria-label="Five by five letter board"></section>
+      <div id="countdown" hidden aria-hidden="true"></div>
+    </div>
+    <div class="board-tools">
+      <button id="board-size" class="secondary" type="button" aria-controls="board" aria-label="Expand board" aria-pressed="false"><span aria-hidden="true">⌃</span></button>
+    </div>
 
     <div class="controls" aria-label="Game controls">
       <button id="start" class="primary" type="button">Start</button>
       <button id="pause" class="secondary" type="button" disabled>Pause</button>
-      <button id="new-board" class="secondary" type="button">New Board</button>
     </div>
 
     <div class="note">3-minute rounds · works offline after first load</div>
-    <div class="note build-stamp">Build: v8 · Sep 19, 2026</div>
+    <div class="note build-stamp">Build: v9 · Sep 20, 2026</div>
   </main>
 
   <script>
@@ -255,9 +281,14 @@
       const statusEl = document.getElementById('status');
       const startBtn = document.getElementById('start');
       const pauseBtn = document.getElementById('pause');
-      const newBoardBtn = document.getElementById('new-board');
+      const countdownEl = document.getElementById('countdown');
+      const boardWrap = document.getElementById('board-wrap');
+      const sizeBtn = document.getElementById('board-size');
+      const wideScreen = window.matchMedia('(min-width: 600px)');
+      let expandedOverride = null;
+      let shuffleDeadline = 0;
 
-      let state = 'ready'; // ready | running | paused | ended
+      let state = 'ready'; // ready | shuffling | running | paused | ended
       let remainingMs = ROUND_MS;
       let deadline = 0;
       let ticker = null;
@@ -296,12 +327,17 @@
         return shuffle(DICE.map(die => die[randomInt(die.length)]));
       }
 
-      function drawBoard() {
+      function drawBoard(blank = false) {
         boardEl.replaceChildren();
-        for (const letter of rollDice()) {
+        for (const letter of (blank ? Array(25).fill('') : rollDice())) {
           const tile = document.createElement('div');
           tile.className = 'tile' + (letter === 'Q' ? ' qu' : '');
           tile.setAttribute('aria-label', letter === 'Q' ? 'Q U' : letter);
+          if (blank) tile.setAttribute('aria-hidden', 'true');
+          tile.style.setProperty('--x', `${randomInt(7) - 3}px`);
+          tile.style.setProperty('--y', `${randomInt(7) - 3}px`);
+          tile.style.setProperty('--tilt', `${randomInt(15) - 7}deg`);
+          tile.style.setProperty('--delay', `${-randomInt(280)}ms`);
 
           const letterEl = document.createElement('span');
           letterEl.className = 'tile-letter';
@@ -326,6 +362,9 @@
         timerEl.textContent = formatTime(remainingMs);
         boardEl.classList.toggle('ended', state === 'ended');
         statusEl.classList.toggle('time-up', state === 'ended');
+        boardEl.classList.toggle('shuffling', state === 'shuffling');
+        countdownEl.hidden = state !== 'shuffling';
+        pauseBtn.textContent = state === 'paused' ? 'Resume' : 'Pause';
 
         switch (state) {
           case 'ready':
@@ -340,16 +379,22 @@
             startBtn.disabled = true;
             pauseBtn.disabled = false;
             break;
+          case 'shuffling':
+            statusEl.textContent = `Shuffling… ${countdownEl.textContent}`;
+            startBtn.textContent = 'Start';
+            startBtn.disabled = true;
+            pauseBtn.disabled = true;
+            break;
           case 'paused':
             statusEl.textContent = 'Paused';
-            startBtn.textContent = 'Resume';
-            startBtn.disabled = false;
-            pauseBtn.disabled = true;
+            startBtn.textContent = 'Start';
+            startBtn.disabled = true;
+            pauseBtn.disabled = false;
             break;
           case 'ended':
             statusEl.textContent = 'Time!';
             startBtn.textContent = 'Start';
-            startBtn.disabled = true;
+            startBtn.disabled = false;
             pauseBtn.disabled = true;
             break;
         }
@@ -381,62 +426,75 @@
         }
       }
 
-      function buzzAt(offsetSeconds, frequency, durationSeconds) {
+      function dingAt(offsetSeconds) {
         if (!audioContext || audioContext.state !== 'running') return;
-
-        const osc1 = audioContext.createOscillator();
-        const osc2 = audioContext.createOscillator();
-        const gain = audioContext.createGain();
         const start = audioContext.currentTime + offsetSeconds;
-        const end = start + durationSeconds;
-
-        osc1.type = 'square';
-        osc2.type = 'sawtooth';
-        osc1.frequency.setValueAtTime(frequency, start);
-        osc2.frequency.setValueAtTime(frequency * 1.012, start);
-
-        gain.gain.setValueAtTime(0.0001, start);
-        gain.gain.exponentialRampToValueAtTime(0.24, start + 0.012);
-        gain.gain.setValueAtTime(0.24, end - 0.035);
-        gain.gain.exponentialRampToValueAtTime(0.0001, end);
-
-        osc1.connect(gain);
-        osc2.connect(gain);
-        gain.connect(audioContext.destination);
-        osc1.start(start);
-        osc2.start(start);
-        osc1.stop(end + 0.02);
-        osc2.stop(end + 0.02);
-      }
-
-      function playEndSignal() {
-        try {
-          ensureAudio();
-          const frequency = 260;
-          const duration = 0.28;
-          buzzAt(0.00, frequency, duration);
-          buzzAt(0.38, frequency, duration);
-          buzzAt(0.76, frequency, duration);
-        } catch (_) {
-          // Visual end state is always present even if audio is unavailable.
+        // Identical bell strikes: a clear fundamental and softly decaying partials.
+        for (const [ratio, volume, decay] of [[1, .22, 1.1], [2, .065, .7], [2.76, .025, .45]]) {
+          const osc = audioContext.createOscillator();
+          const gain = audioContext.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(880 * ratio, start);
+          gain.gain.setValueAtTime(0, start);
+          gain.gain.linearRampToValueAtTime(volume, start + .006);
+          gain.gain.exponentialRampToValueAtTime(.0001, start + decay);
+          gain.gain.linearRampToValueAtTime(0, start + decay + .02);
+          osc.connect(gain);
+          gain.connect(audioContext.destination);
+          osc.onended = () => { osc.disconnect(); gain.disconnect(); };
+          osc.start(start);
+          osc.stop(start + decay + .03);
         }
       }
 
-      function startRound() {
-        if (state === 'ended') return;
-        ensureAudio();
-        deadline = performance.now() + remainingMs;
-        state = 'running';
+      function playEndSignal() {
+        try { ensureAudio(); [0, .45, .90].forEach(dingAt); }
+        catch (_) { /* The visual alert remains available without audio. */ }
+      }
+
+      function shuffleTick() {
+        if (state !== 'shuffling') return;
+        const left = shuffleDeadline - performance.now();
+        if (left > 0) {
+          countdownEl.textContent = String(Math.ceil(left / 1000));
+          render();
+          return;
+        }
         clearTicker();
-        ticker = setInterval(tick, 200);
+        drawBoard();
+        remainingMs = ROUND_MS;
+        deadline = performance.now() + ROUND_MS;
+        state = 'running';
+        ticker = setInterval(tick, 100);
         tick();
       }
 
+      function startRound() {
+        if (state !== 'ready' && state !== 'ended') return;
+        try { ensureAudio(); } catch (_) { /* Audio is optional. */ }
+        clearTicker();
+        state = 'shuffling';
+        remainingMs = ROUND_MS;
+        drawBoard(true);
+        shuffleDeadline = performance.now() + 3000;
+        shuffleTick();
+        ticker = setInterval(shuffleTick, 50);
+      }
+
       function pauseRound() {
+        if (state === 'paused') {
+          try { ensureAudio(); } catch (_) {}
+          deadline = performance.now() + remainingMs;
+          state = 'running';
+          ticker = setInterval(tick, 100);
+          tick();
+          return;
+        }
         if (state !== 'running') return;
         remainingMs = Math.max(0, deadline - performance.now());
+        if (remainingMs <= 0) { endRound(); return; }
         clearTicker();
-        state = remainingMs > 0 ? 'paused' : 'ended';
+        state = 'paused';
         render();
       }
 
@@ -448,23 +506,31 @@
         render();
       }
 
-      function newBoard() {
-        clearTicker();
-        remainingMs = ROUND_MS;
-        state = 'ready';
-        drawBoard();
-        render();
+      function renderSize() {
+        const expanded = expandedOverride ?? !wideScreen.matches;
+        if (expandedOverride !== null) boardWrap.dataset.expanded = String(expanded);
+        sizeBtn.setAttribute('aria-label', expanded ? 'Reduce board' : 'Expand board');
+        sizeBtn.title = expanded ? 'Reduce board' : 'Expand board';
+        sizeBtn.setAttribute('aria-pressed', String(expanded));
+        sizeBtn.firstElementChild.textContent = expanded ? '⌄' : '⌃';
       }
+      sizeBtn.addEventListener('click', () => {
+        expandedOverride = !(expandedOverride ?? !wideScreen.matches);
+        renderSize();
+      });
+      wideScreen.addEventListener('change', renderSize);
+      renderSize();
 
       startBtn.addEventListener('click', startRound);
       pauseBtn.addEventListener('click', pauseRound);
-      newBoardBtn.addEventListener('click', newBoard);
 
       document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible' && state === 'running') tick();
+        if (document.visibilityState !== 'visible') return;
+        if (state === 'running') tick();
+        if (state === 'shuffling') shuffleTick();
       });
 
-      drawBoard();
+      drawBoard(true);
       render();
 
       if ('serviceWorker' in navigator) {
