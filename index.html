@@ -245,7 +245,7 @@
     .shuffle-mark.nested-diamonds::after { width: 34%; height: 34%; }
     #board.shuffling .shuffle-mark { animation: shuffle-spin 900ms linear infinite; animation-delay: var(--delay); }
     @keyframes shuffle-spin {
-      to { transform: translate(-50%, -50%) rotate(calc(360deg * var(--spin-direction))); }
+      to { transform: translate(-50%, -50%) rotate(360deg); }
     }
     @media (prefers-reduced-motion: reduce) {
       #board.shuffling .shuffle-mark { animation: none; }
@@ -276,7 +276,7 @@
     </div>
 
     <div class="note">3-minute rounds · works offline after first load</div>
-    <div class="note build-stamp">Build: v13 · Sep 20, 2026</div>
+    <div class="note build-stamp">Build: v14 · Sep 20, 2026</div>
   </main>
 
   <script>
@@ -368,7 +368,7 @@
             const mark = document.createElement('span');
             const symbols = ['compass-star', 'nested-diamonds', 'orbiting-dot'];
             mark.className = `shuffle-mark ${symbols[randomInt(symbols.length)]}`;
-            mark.style.setProperty('--spin-direction', randomInt(2) ? '1' : '-1');
+            mark.style.animationDirection = randomInt(2) ? 'normal' : 'reverse';
             mark.setAttribute('aria-hidden', 'true');
             tile.appendChild(mark);
           }
