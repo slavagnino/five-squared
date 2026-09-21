@@ -5,7 +5,7 @@ Five² is a deliberately simple 5×5 letter-grid word game for two people sharin
 - 25 six-sided letter dice using a classic 5×5 letter-cube distribution
 - cryptographically strong browser randomness when available (`crypto.getRandomValues`)
 - 3-minute round timer
-- two-tone audible signal at 0:00
+- audible signal at 0:00
 - persistent visual time-up state: `0:00`, **Time!**, and a gray board
 - no accounts, scoring, dictionary, ads, analytics, or external libraries
 - installable on an iPad home screen
@@ -32,14 +32,14 @@ No build step is required. The included `.nojekyll` file tells GitHub Pages to s
 2. Close it.
 3. Turn on Airplane Mode (and make sure Wi-Fi is off).
 4. Launch Five² again from its Home Screen icon.
-5. Tap **New Board** a few times and run a short timer test to confirm the app shell is cached locally.
+5. Tap **Start** a few times and run a short timer test to confirm the app shell is cached locally.
 
 ## Game behavior
 
-- **New Board** rolls all 25 dice, shuffles their positions, resets the timer to 3:00, and clears the time-up state.
-- **Start** begins the timer. **Pause** freezes the remaining time; **Resume** continues it.
-- At **0:00**, Five² plays two short tones if audio is available, displays **Time!**, and changes the board to gray while keeping the letters readable.
-- The time-up state stays visible until **New Board** is pressed.
+- **Start** rolls all 25 dice, shuffles their positions, resets the timer to 3:00, and clears the time-up state, then begins the timer.
+- **Pause** freezes the remaining time; **Resume** continues it.
+- At **0:00**, Five² plays an audible tone if audio is available, displays **Time!**, and changes the board to gray while keeping the letters readable.
+- The time-up state stays visible until **Start** is pressed.
 - A Q tile is displayed as **Qu**.
 
 ## Local testing on a computer
