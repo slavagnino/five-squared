@@ -288,7 +288,7 @@
     </div>
 
     <div class="note">3-minute rounds · works offline after first load</div>
-    <div class="note build-stamp">Build: v17 · Sep 20, 2026</div>
+    <div class="note build-stamp">Build: v18 · Sep 21, 2026</div>
   </main>
 
   <script>
@@ -323,6 +323,12 @@
       let deadline = 0;
       let ticker = null;
       let audioContext = null;
+      let shuffleStartedAt = 0;
+      let shuffleLetters = [];
+      let shuffleTiles = [];
+      let shuffleVisibleIndex = -1;
+      const shufflePath = [0, 1, 2, 3, 4, 9, 14, 19, 24, 23, 22, 21, 20, 15, 10, 5, 6, 7, 8, 13, 18, 17, 16, 11];
+      const SHUFFLE_MS = 3000;
 
       function randomInt(maxExclusive) {
         if (!Number.isInteger(maxExclusive) || maxExclusive <= 0) {
@@ -372,18 +378,10 @@
           letterEl.className = 'tile-letter';
           letterEl.textContent = letter === 'Q' ? 'Qu' : letter;
 
-          const rotation = randomInt(4) * 90;
+          const rotation = blank ? 0 : randomInt(4) * 90;
           letterEl.style.setProperty('--rotation', `${rotation}deg`);
 
           tile.appendChild(letterEl);
-          if (blank && index !== 12) {
-            const mark = document.createElement('span');
-            const symbols = ['compass-star', 'nested-diamonds', 'orbiting-dot'];
-            const direction = randomInt(2) ? '' : ' spin-reverse';
-            mark.className = `shuffle-mark ${symbols[randomInt(symbols.length)]}${direction}`;
-            mark.setAttribute('aria-hidden', 'true');
-            tile.appendChild(mark);
-          }
           boardEl.appendChild(tile);
         }
         boardEl.appendChild(countdownEl);
@@ -490,9 +488,30 @@
         catch (_) { /* The visual alert remains available without audio. */ }
       }
 
+      function revealShuffleStep(now) {
+        const elapsed = Math.max(0, now - shuffleStartedAt);
+        const count = Math.min(shufflePath.length, Math.floor(elapsed / (SHUFFLE_MS / shufflePath.length)) + 1);
+        if (count <= shuffleVisibleIndex + 1) return;
+        if (shuffleVisibleIndex >= 0) {
+          const previousTile = shuffleTiles[shufflePath[shuffleVisibleIndex]];
+          previousTile.querySelector('.tile-letter').textContent = '';
+          previousTile.setAttribute('aria-hidden', 'true');
+          previousTile.setAttribute('aria-label', 'Blank');
+        }
+        const nextIndex = count - 1;
+        const tile = shuffleTiles[shufflePath[nextIndex]];
+        const letter = shuffleLetters[shufflePath[nextIndex]];
+        tile.querySelector('.tile-letter').textContent = letter === 'Q' ? 'Qu' : letter;
+        tile.setAttribute('aria-hidden', 'false');
+        tile.setAttribute('aria-label', letter === 'Q' ? 'Q U' : letter);
+        shuffleVisibleIndex = nextIndex;
+      }
+
       function shuffleTick() {
         if (state !== 'shuffling') return;
-        const left = shuffleDeadline - performance.now();
+        const now = performance.now();
+        revealShuffleStep(now);
+        const left = shuffleDeadline - now;
         if (left > 0) {
           countdownEl.textContent = String(Math.ceil(left / 1000));
           render();
@@ -513,8 +532,12 @@
         clearTicker();
         state = 'shuffling';
         remainingMs = ROUND_MS;
+        shuffleLetters = rollDice();
+        shuffleVisibleIndex = -1;
+        shuffleStartedAt = performance.now();
         drawBoard(true);
-        shuffleDeadline = performance.now() + 3000;
+        shuffleTiles = Array.from(boardEl.querySelectorAll('.tile'));
+        shuffleDeadline = shuffleStartedAt + SHUFFLE_MS;
         shuffleTick();
         ticker = setInterval(shuffleTick, 50);
       }
