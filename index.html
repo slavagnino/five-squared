@@ -288,7 +288,7 @@
     </div>
 
     <div class="note">3-minute rounds · works offline after first load</div>
-    <div class="note build-stamp">Build: v18 · Sep 21, 2026</div>
+    <div class="note build-stamp">Build: v19 · Sep 21, 2026</div>
   </main>
 
   <script>
@@ -378,7 +378,7 @@
           letterEl.className = 'tile-letter';
           letterEl.textContent = letter === 'Q' ? 'Qu' : letter;
 
-          const rotation = blank ? 0 : randomInt(4) * 90;
+          const rotation = randomInt(4) * 90;
           letterEl.style.setProperty('--rotation', `${rotation}deg`);
 
           tile.appendChild(letterEl);
@@ -492,12 +492,6 @@
         const elapsed = Math.max(0, now - shuffleStartedAt);
         const count = Math.min(shufflePath.length, Math.floor(elapsed / (SHUFFLE_MS / shufflePath.length)) + 1);
         if (count <= shuffleVisibleIndex + 1) return;
-        if (shuffleVisibleIndex >= 0) {
-          const previousTile = shuffleTiles[shufflePath[shuffleVisibleIndex]];
-          previousTile.querySelector('.tile-letter').textContent = '';
-          previousTile.setAttribute('aria-hidden', 'true');
-          previousTile.setAttribute('aria-label', 'Blank');
-        }
         const nextIndex = count - 1;
         const tile = shuffleTiles[shufflePath[nextIndex]];
         const letter = shuffleLetters[shufflePath[nextIndex]];
