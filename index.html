@@ -220,6 +220,18 @@
     white-space: nowrap;
   }
 
+  .tile-letter.has-orientation-mark::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: calc(50% + .40em);
+    width: .64em;
+    border-top: 3px solid currentColor;
+    pointer-events: none;
+    transform: translateX(-50%);
+  }
+  .tile-letter.mark-m::after { width: .71em; }
+
     .board-wrap { position: relative; width: 100%; margin: 0 auto; }
     @media (min-width: 600px) { .board-wrap { width: 68%; } }
     .board-wrap[data-expanded="true"] { width: 100%; }
@@ -288,7 +300,7 @@
     </div>
 
     <div class="note">3-minute rounds · works offline after first load</div>
-    <div class="note build-stamp">Build: v21 · Sep 25, 2026</div>
+    <div class="note build-stamp">Build: v22 · Sep 25, 2026</div>
   </main>
 
   <script>
@@ -363,6 +375,13 @@
         return shuffle(DICE.map(die => die[randomInt(die.length)]));
       }
 
+      function updateOrientationMark(tile, letter) {
+        tile.classList.toggle('qu', letter === 'Q');
+        const letterEl = tile.querySelector('.tile-letter');
+        letterEl.classList.toggle('has-orientation-mark', letter === 'M' || letter === 'W');
+        letterEl.classList.toggle('mark-m', letter === 'M');
+      }
+
       function drawBoard(blank = false) {
         boardEl.replaceChildren();
         const letters = blank ? Array(25).fill('') : rollDice();
@@ -382,6 +401,7 @@
           letterEl.style.setProperty('--rotation', `${rotation}deg`);
 
           tile.appendChild(letterEl);
+          updateOrientationMark(tile, letter);
           boardEl.appendChild(tile);
         }
         boardEl.appendChild(countdownEl);
@@ -496,6 +516,7 @@
         const tile = shuffleTiles[shufflePath[nextIndex]];
         const letter = shuffleLetters[shufflePath[nextIndex]];
         tile.querySelector('.tile-letter').textContent = letter === 'Q' ? 'Qu' : letter;
+        updateOrientationMark(tile, letter);
         tile.setAttribute('aria-hidden', 'false');
         tile.setAttribute('aria-label', letter === 'Q' ? 'Q U' : letter);
         shuffleVisibleIndex = nextIndex;
